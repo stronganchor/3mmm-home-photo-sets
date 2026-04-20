@@ -1,9 +1,12 @@
 <?php
 /**
  * Plugin Name: 3MMM Home Photo Sets
+ * Plugin URI: https://github.com/stronganchor/3mmm-home-photo-sets
  * Description: Replaces the homepage ministry carousel with structured photo sets and a cleaner, captioned gallery.
- * Version: 1.0.0
- * Author: OpenAI Codex
+ * Version: 1.0.1
+ * Update URI: https://github.com/stronganchor/3mmm-home-photo-sets
+ * Author: Strong Anchor Tech
+ * Author URI: https://github.com/stronganchor/3mmm-home-photo-sets
  * License: GPL-2.0-or-later
  */
 
@@ -11,8 +14,67 @@ if (! defined('ABSPATH')) {
 	exit;
 }
 
+define('MMM_HOME_PHOTO_SETS_VERSION', '1.0.1');
+define('MMM_HOME_PHOTO_SETS_FILE', __FILE__);
+define('MMM_HOME_PHOTO_SETS_DIR', plugin_dir_path(__FILE__));
+define('MMM_HOME_PHOTO_SETS_URL', plugin_dir_url(__FILE__));
+
+function mmm_home_photo_sets_get_update_branch() {
+	$branch = 'main';
+
+	if (defined('MMM_HOME_PHOTO_SETS_UPDATE_BRANCH') && is_string(MMM_HOME_PHOTO_SETS_UPDATE_BRANCH)) {
+		$override = trim(MMM_HOME_PHOTO_SETS_UPDATE_BRANCH);
+		if ($override !== '') {
+			$branch = $override;
+		}
+	}
+
+	return (string) apply_filters('mmm_home_photo_sets_update_branch', $branch);
+}
+
+function mmm_home_photo_sets_bootstrap_update_checker() {
+	$checker_file = MMM_HOME_PHOTO_SETS_DIR . 'plugin-update-checker/plugin-update-checker.php';
+	if (! file_exists($checker_file)) {
+		return;
+	}
+
+	require_once $checker_file;
+
+	if (! class_exists('\YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
+		return;
+	}
+
+	$repo_url = (string) apply_filters(
+		'mmm_home_photo_sets_update_repository',
+		'https://github.com/stronganchor/3mmm-home-photo-sets'
+	);
+	$slug = dirname(plugin_basename(__FILE__));
+
+	$update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+		$repo_url,
+		__FILE__,
+		$slug
+	);
+
+	$update_checker->setBranch(mmm_home_photo_sets_get_update_branch());
+
+	foreach (array('MMM_HOME_PHOTO_SETS_GITHUB_TOKEN', 'STRONGANCHOR_GITHUB_TOKEN', 'ANCHOR_GITHUB_TOKEN') as $constant_name) {
+		if (! defined($constant_name) || ! is_string(constant($constant_name))) {
+			continue;
+		}
+
+		$token = trim((string) constant($constant_name));
+		if ($token !== '') {
+			$update_checker->setAuthentication($token);
+			break;
+		}
+	}
+}
+
+mmm_home_photo_sets_bootstrap_update_checker();
+
 final class MMM_Home_Photo_Sets {
-	const VERSION = '1.0.0';
+	const VERSION = MMM_HOME_PHOTO_SETS_VERSION;
 	const POST_TYPE = 'mmm_photo_set';
 	const META_IMAGE_IDS = '_mmm_photo_set_image_ids';
 	const SEEDED_OPTION = 'mmm_home_photo_sets_seeded';
@@ -196,13 +258,13 @@ final class MMM_Home_Photo_Sets {
 		wp_enqueue_media();
 		wp_enqueue_style(
 			'mmm-home-photo-sets-admin',
-			plugin_dir_url(__FILE__) . 'assets/admin.css',
+			MMM_HOME_PHOTO_SETS_URL . 'assets/admin.css',
 			array(),
 			self::VERSION
 		);
 		wp_enqueue_script(
 			'mmm-home-photo-sets-admin',
-			plugin_dir_url(__FILE__) . 'assets/admin.js',
+			MMM_HOME_PHOTO_SETS_URL . 'assets/admin.js',
 			array('jquery'),
 			self::VERSION,
 			true
@@ -229,7 +291,7 @@ final class MMM_Home_Photo_Sets {
 		}
 
 		$replacement = '[mmm_photo_sets_gallery max_images="25"]';
-		$pattern = '/\[vc_images_carousel\b(?=[^\]]*el_class=(["\'])ministry-photos\1)[^\]]*\]/';
+		$pattern = '/\[vc_images_carousel\b(?=[^\]]*ministry-photos)[^\]]*\]/';
 
 		return (string) preg_replace($pattern, $replacement, $content, 1);
 	}
@@ -258,13 +320,13 @@ final class MMM_Home_Photo_Sets {
 
 		wp_enqueue_style(
 			'mmm-home-photo-sets',
-			plugin_dir_url(__FILE__) . 'assets/gallery.css',
+			MMM_HOME_PHOTO_SETS_URL . 'assets/gallery.css',
 			array(),
 			self::VERSION
 		);
 		wp_enqueue_script(
 			'mmm-home-photo-sets',
-			plugin_dir_url(__FILE__) . 'assets/gallery.js',
+			MMM_HOME_PHOTO_SETS_URL . 'assets/gallery.js',
 			array(),
 			self::VERSION,
 			true
@@ -276,11 +338,6 @@ final class MMM_Home_Photo_Sets {
 		ob_start();
 		?>
 		<div class="mmm-gallery-shell" id="<?php echo esc_attr($instance_id); ?>">
-			<div class="mmm-gallery-intro">
-				<p class="mmm-gallery-kicker"><?php esc_html_e('Recent ministry events', 'mmm-home-photo-sets'); ?></p>
-				<p class="mmm-gallery-note"><?php echo esc_html(sprintf(__('Showing the newest photo sets first, up to %d images total.', 'mmm-home-photo-sets'), $max_images)); ?></p>
-			</div>
-
 			<div class="mmm-gallery-sets">
 				<?php foreach ($sets as $set) : ?>
 					<article class="mmm-gallery-set">

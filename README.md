@@ -9,6 +9,7 @@ What it does:
 - keeps each set together and stops before the configured max image count is exceeded
 - gives each set a real heading, excerpt, and optional description instead of relying on caption-card images
 - lets future updates happen through a simple `Photo Sets` admin menu
+- checks GitHub for plugin updates through the bundled plugin update checker
 
 Usage:
 
