@@ -1,0 +1,16 @@
+.mmm-image-preview {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.mmm-image-preview img {
+	display: block;
+	width: 96px;
+	height: 96px;
+	object-fit: cover;
+	border: 1px solid #ccd0d4;
+	border-radius: 8px;
+	background: #fff;
+}
