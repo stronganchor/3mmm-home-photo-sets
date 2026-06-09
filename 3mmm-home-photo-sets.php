@@ -3,7 +3,7 @@
  * Plugin Name: 3MMM Home Photo Sets
  * Plugin URI: https://github.com/stronganchor/3mmm-home-photo-sets
  * Description: Replaces the homepage ministry carousel with structured photo sets and a cleaner, captioned gallery.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Update URI: https://github.com/stronganchor/3mmm-home-photo-sets
  * Author: Strong Anchor Tech
  * Author URI: https://github.com/stronganchor/3mmm-home-photo-sets
@@ -14,7 +14,7 @@ if (! defined('ABSPATH')) {
 	exit;
 }
 
-define('MMM_HOME_PHOTO_SETS_VERSION', '1.0.2');
+define('MMM_HOME_PHOTO_SETS_VERSION', '1.0.3');
 define('MMM_HOME_PHOTO_SETS_FILE', __FILE__);
 define('MMM_HOME_PHOTO_SETS_DIR', plugin_dir_path(__FILE__));
 define('MMM_HOME_PHOTO_SETS_URL', plugin_dir_url(__FILE__));
@@ -356,9 +356,16 @@ final class MMM_Home_Photo_Sets {
 							<?php endif; ?>
 						</div>
 
-						<div class="mmm-gallery-set__grid">
+						<?php
+						$image_ids = $this->get_post_image_ids($set->ID);
+						$image_count = count($image_ids);
+						$grid_classes = array(
+							'mmm-gallery-set__grid',
+							'mmm-gallery-set__grid--count-' . min($image_count, 6),
+						);
+						?>
+						<div class="<?php echo esc_attr(implode(' ', $grid_classes)); ?>">
 							<?php
-							$image_ids = $this->get_post_image_ids($set->ID);
 							foreach ($image_ids as $image_id) :
 								$thumbnail = wp_get_attachment_image_src($image_id, 'large');
 								$full = wp_get_attachment_image_src($image_id, 'full');
